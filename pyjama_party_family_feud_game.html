@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pyjama Party Family Feud</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* 3D Flip Card Styling */
+        .flip-card {
+            perspective: 1000px;
+        }
+        .flip-card-inner {
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+        .flip-card.revealed .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+        .flip-card-front, .flip-card-back {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .flip-card-back {
+            transform: rotateY(180deg);
+        }
+        /* Subtle shake animation on strike */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-6px); }
+            80% { transform: translateX(6px); }
+        }
+        .shake-board {
+            animation: shake 0.4s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-pink-50 text-pink-950 min-h-screen p-3 sm:p-6 md:p-8 flex flex-col items-center selection:bg-pink-200">
+
+    <!-- Header -->
+    <header class="text-center mb-5 max-w-2xl">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-200/70 text-pink-800 text-xs font-extrabold uppercase tracking-wider mb-2">
+            <span>🎉</span> Steve Harvey Party Edition <span>✨</span>
+        </div>
+        <h1 class="text-3xl sm:text-5xl font-black text-pink-600 tracking-tight drop-shadow-xs">
+            Pyjama Party Family Feud
+        </h1>
+        <div class="mt-3 flex justify-center">
+            <button onclick="toggleBgMusic()" id="bg-music-btn"
+                class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white hover:bg-pink-100 active:scale-95 text-pink-700 border-2 border-pink-300 font-extrabold text-xs shadow-xs transition cursor-pointer">
+                <span id="bg-music-icon">🔇</span>
+                <span id="bg-music-label">Play Game Music</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Game Card -->
+    <main id="game-card" class="w-full max-w-4xl bg-white shadow-xl shadow-pink-200/50 rounded-3xl p-4 sm:p-6 md:p-8 border-4 border-pink-200 transition-all">
+
+        <!-- STANDARD FEUD BOARD VIEW -->
+        <div id="standard-board-view">
+            <!-- How to Play Explanation Banner -->
+            <div class="mb-6 bg-pink-100/80 border-2 border-pink-200 rounded-2xl p-4 text-center shadow-inner">
+                <h2 class="font-extrabold text-pink-900 text-sm sm:text-base mb-1 flex items-center justify-center gap-1.5">
+                    <span>🎮</span> How to Play
+                </h2>
+                <p class="text-xs sm:text-sm text-pink-800 leading-relaxed max-w-2xl mx-auto">
+                    Two teams battle to guess the top survey answers! Click the pink cards to flip and reveal answers and points. Hit the red <strong>Strike (X)</strong> button for wrong guesses. Award round points to the winning team!
+                </p>
+            </div>
+
+            <!-- Round Selector Bar (1-10) -->
+            <div class="mb-6">
+                <label class="block text-xs font-extrabold text-pink-500 uppercase tracking-wider mb-2 text-center">
+                    Select Round (1 – 10)
+                </label>
+                <div id="round-buttons" class="flex flex-wrap justify-center gap-1.5 sm:gap-2"></div>
+            </div>
+
+            <!-- Scoreboard & Strikes Bar -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center mb-6 bg-pink-100/60 p-4 rounded-2xl border border-pink-200">
+                <!-- Team 1 -->
+                <div id="team1-card" class="text-center bg-white p-3.5 rounded-2xl shadow-sm border-4 border-pink-500 ring-2 ring-pink-300 transition-all">
+                    <div class="mb-1.5">
+                        <button onclick="setActiveTeam(1)" id="team1-active-btn" class="px-3 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-pink-600 text-white shadow-xs transition cursor-pointer">
+                            ⭐ Playing Now
+                        </button>
+                    </div>
+                    <input type="text" id="team1-name" value="Team PJs" aria-label="Team 1 Name"
+                        class="font-extrabold text-pink-700 text-center w-full bg-transparent focus:outline-none border-b-2 border-dashed border-pink-300 focus:border-pink-500 pb-1 text-base">
+                    <div id="team1-score" class="text-4xl font-black text-pink-600 my-1.5">0</div>
+                    <div class="flex justify-center gap-1.5 mt-2">
+                        <button onclick="adjustScore(1, -10)" class="px-2.5 py-1.5 bg-pink-100 hover:bg-pink-200 active:scale-95 text-pink-800 rounded-xl text-xs font-extrabold transition cursor-pointer">-10</button>
+                        <button onclick="adjustScore(1, 10)" class="px-2.5 py-1.5 bg-pink-500 hover:bg-pink-600 active:scale-95 text-white rounded-xl text-xs font-extrabold transition cursor-pointer">+10</button>
+                        <button onclick="awardRoundPoints(1)" class="px-2.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white rounded-xl text-xs font-extrabold transition cursor-pointer" title="Award revealed board points">+Board</button>
+                    </div>
+                </div>
+
+                <!-- Strikes & Controls -->
+                <div class="text-center flex flex-col items-center justify-center py-2">
+                    <div class="text-xs font-extrabold uppercase tracking-widest text-pink-500 mb-1.5">Strikes</div>
+                    <div id="strikes-display" class="text-3xl font-black tracking-widest mb-3 select-none">⭕ ⭕ ⭕</div>
+                    <div class="flex gap-2">
+                        <button onclick="addStrike()" class="px-4 py-2 bg-red-500 hover:bg-red-600 active:scale-95 text-white rounded-xl font-extrabold text-xs sm:text-sm shadow-sm transition cursor-pointer">
+                            Strike (X)
+                        </button>
+                        <button onclick="resetStrikes()" class="px-3.5 py-2 bg-pink-200/80 hover:bg-pink-300 active:scale-95 text-pink-900 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Team 2 -->
+                <div id="team2-card" class="text-center bg-white p-3.5 rounded-2xl shadow-sm border-2 border-pink-200 opacity-85 transition-all">
+                    <div class="mb-1.5">
+                        <button onclick="setActiveTeam(2)" id="team2-active-btn" class="px-3 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-pink-100 hover:bg-pink-200 text-pink-700 transition cursor-pointer">
+                            Set Playing
+                        </button>
+                    </div>
+                    <input type="text" id="team2-name" value="Team Onesies" aria-label="Team 2 Name"
+                        class="font-extrabold text-pink-700 text-center w-full bg-transparent focus:outline-none border-b-2 border-dashed border-pink-300 focus:border-pink-500 pb-1 text-base">
+                    <div id="team2-score" class="text-4xl font-black text-pink-600 my-1.5">0</div>
+                    <div class="flex justify-center gap-1.5 mt-2">
+                        <button onclick="adjustScore(2, -10)" class="px-2.5 py-1.5 bg-pink-100 hover:bg-pink-200 active:scale-95 text-pink-800 rounded-xl text-xs font-extrabold transition cursor-pointer">-10</button>
+                        <button onclick="adjustScore(2, 10)" class="px-2.5 py-1.5 bg-pink-500 hover:bg-pink-600 active:scale-95 text-white rounded-xl text-xs font-extrabold transition cursor-pointer">+10</button>
+                        <button onclick="awardRoundPoints(2)" class="px-2.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white rounded-xl text-xs font-extrabold transition cursor-pointer" title="Award revealed board points">+Board</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question Display Banner -->
+            <div class="text-center mb-5 bg-pink-900 text-white rounded-2xl p-5 shadow-md">
+                <div class="flex items-center justify-center gap-2 mb-2">
+                    <span class="inline-block px-3 py-0.5 bg-pink-600 text-white rounded-full text-xs font-extrabold uppercase tracking-wider">
+                        Round <span id="current-round-num">1</span>
+                    </span>
+                    <span class="inline-block px-3 py-0.5 bg-pink-800 text-pink-200 rounded-full text-xs font-bold">
+                        Board Points: <span id="board-points-sum">0</span>
+                    </span>
+                </div>
+                <h2 id="question-text" class="text-lg sm:text-xl md:text-2xl font-bold leading-snug">
+                    Loading survey question...
+                </h2>
+            </div>
+
+            <!-- Player Guess Input Section -->
+            <div class="mb-6 bg-pink-50 border-2 border-pink-200 rounded-2xl p-3.5 sm:p-4 shadow-xs">
+                <div class="flex flex-col sm:flex-row items-center gap-2.5">
+                    <div class="flex items-center gap-1.5 text-xs font-extrabold text-pink-700 uppercase tracking-wider shrink-0">
+                        <span>🎤</span>
+                        <span id="guess-prompt-team">Team PJs's Guess:</span>
+                    </div>
+                    <div class="flex w-full gap-2">
+                        <input type="text" id="board-guess-input" placeholder="Type player answer & press Enter..."
+                            onkeydown="if(event.key==='Enter'){ event.preventDefault(); checkBoardGuess(); }"
+                            class="flex-1 px-3.5 py-2 bg-white border-2 border-pink-300 rounded-xl text-sm font-semibold text-pink-950 focus:outline-none focus:border-pink-600">
+                        <button onclick="checkBoardGuess()"
+                            class="px-5 py-2 bg-pink-600 hover:bg-pink-700 active:scale-95 text-white rounded-xl font-extrabold text-sm shadow-sm transition cursor-pointer shrink-0">
+                            Submit
+                        </button>
+                    </div>
+                </div>
+                <div id="board-guess-feedback" class="text-xs font-bold text-pink-500 mt-2 text-center sm:text-left">
+                    Type an answer above — matching answers flip automatically, misses trigger a Strike!
+                </div>
+            </div>
+
+            <!-- Answers Board Grid -->
+            <div id="answers-board" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4"></div>
+
+            <!-- Host Quick Controls -->
+            <div class="flex justify-end mb-2">
+                <button onclick="revealAllAnswers()" class="text-xs font-bold text-pink-500 hover:text-pink-700 underline cursor-pointer">
+                    Reveal All Remaining Answers
+                </button>
+            </div>
+        </div>
+
+        <!-- FAST MONEY BONUS ROUND VIEW -->
+        <div id="fast-money-view" class="hidden">
+            <!-- Fast Money Rules Explanation Banner -->
+            <div class="mb-6 bg-pink-100/80 border-2 border-pink-200 rounded-2xl p-4 text-center shadow-inner">
+                <h2 class="font-extrabold text-pink-900 text-sm sm:text-base mb-1 flex items-center justify-center gap-1.5">
+                    <span>⚡</span> Fast Money Rules & Auto-Scoring
+                </h2>
+                <p class="text-xs sm:text-sm text-pink-800 leading-relaxed max-w-2xl mx-auto">
+                    Type the player's answer and press <strong>Enter</strong> (or click <strong>Check</strong>). Matching survey answers automatically award points! If a player repeats a previous answer (or you click <strong>❌</strong>), a big <strong>X</strong> flashes and clears the box. Reach <strong>100+ points</strong> to win!
+                </p>
+            </div>
+
+            <!-- Timer & Live Bonus Score Header -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <!-- Countdown Timer -->
+                <div class="bg-pink-900 text-white rounded-2xl p-5 text-center flex flex-col items-center justify-center shadow-md">
+                    <span class="text-xs font-extrabold uppercase tracking-widest text-pink-300 mb-1">Countdown Timer</span>
+                    <div id="timer-display" class="text-5xl sm:text-6xl font-black text-pink-400 tabular-nums my-1">20</div>
+                    <div class="flex gap-2 mt-2">
+                        <button onclick="startTimer(20)" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white rounded-xl font-extrabold text-xs sm:text-sm shadow transition cursor-pointer">
+                            ▶ Start 20s
+                        </button>
+                        <button onclick="startTimer(25)" class="px-3.5 py-2 bg-pink-600 hover:bg-pink-500 active:scale-95 text-white rounded-xl font-extrabold text-xs sm:text-sm shadow transition cursor-pointer">
+                            ▶ 25s
+                        </button>
+                        <button onclick="resetTimer()" class="px-3.5 py-2 bg-pink-800 hover:bg-pink-700 active:scale-95 text-pink-100 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Live Bonus Total -->
+                <div class="bg-pink-50 border-2 border-pink-300 rounded-2xl p-5 text-center flex flex-col items-center justify-center">
+                    <span class="text-xs font-extrabold uppercase tracking-widest text-pink-600 mb-1">Final Bonus Score</span>
+                    <div class="text-4xl sm:text-5xl font-black text-pink-600 my-1">
+                        <span id="fm-total-score">0</span> <span class="text-xl text-pink-400">/ 100</span>
+                    </div>
+                    <div id="fm-status-badge" class="mt-2 px-4 py-1 rounded-full bg-pink-100 text-pink-700 font-extrabold text-xs">
+                        Need 100+ pts to Win!
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5 Rapid-Fire Interactive Questions & Point Inputs -->
+            <div class="mb-4">
+                <div class="flex items-center justify-between mb-3 px-1">
+                    <span class="text-xs font-extrabold text-pink-600 uppercase tracking-wider">5 Rapid-Fire Party Questions</span>
+                    <div class="flex items-center gap-3">
+                        <button onclick="toggleFastMoneyHints()" id="fm-hints-btn" class="text-xs font-bold text-pink-600 hover:text-pink-800 underline cursor-pointer">👀 Show Survey Answers</button>
+                        <button onclick="resetFastMoneyBoard()" class="text-xs font-bold text-pink-500 hover:text-pink-700 underline cursor-pointer">Clear Board</button>
+                    </div>
+                </div>
+                <div id="fm-questions-container" class="space-y-3"></div>
+            </div>
+        </div>
+
+        <!-- Bottom Mode Toggle Button -->
+        <div class="border-t-2 border-pink-100 pt-5 mt-5 flex justify-center">
+            <button onclick="toggleGameMode()" id="mode-toggle-btn"
+                class="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 active:scale-95 text-white rounded-2xl font-extrabold text-sm sm:text-base shadow-lg shadow-pink-300/60 transition cursor-pointer">
+                Switch to Fast Money Bonus Round ⚡
+            </button>
+        </div>
+    </main>
+
+    <!-- Full-Screen Strike Flash Overlay -->
+    <div id="strike-flash" class="fixed inset-0 bg-red-600/45 pointer-events-none opacity-0 transition-opacity duration-300 flex items-center justify-center z-50">
+        <span id="strike-flash-icon" class="text-9xl font-black text-white drop-shadow-2xl">❌</span>
+    </div>
+
+    <!-- Local Background Music Audio Element -->
+    <audio id="bg-music-audio" src="Game-Show-Music.mp3" loop preload="auto"></audio>
+
+    <script>
+        // 10 Most Iconic & Viral Steve Harvey Family Feud Survey Rounds
+        const roundsData = [
+            {
+                q: "Name something you wouldn't want to see in the dark.",
+                answers: [
+                    { text: "Ghost / monster", points: 36 },
+                    { text: "Spider / creepy bug", points: 24 },
+                    { text: "Intruder / burglar", points: 18 },
+                    { text: "Snake / rat", points: 14 },
+                    { text: "Naked person / grandma", points: 8 }
+                ]
+            },
+            {
+                q: "Name a part of a man's body that gets bigger as he gets older.",
+                answers: [
+                    { text: "Stomach / belly / gut", points: 45 },
+                    { text: "Ears", points: 22 },
+                    { text: "Nose", points: 16 },
+                    { text: "Prostate / rear end", points: 10 },
+                    { text: "Head / forehead", points: 7 }
+                ]
+            },
+            {
+                q: "Name something a husband might say he forgot to do on his anniversary.",
+                answers: [
+                    { text: "Buy a gift / flowers", points: 44 },
+                    { text: "Make dinner reservations", points: 24 },
+                    { text: "Buy an anniversary card", points: 16 },
+                    { text: "Remember the date itself", points: 10 },
+                    { text: "Clean the house", points: 6 }
+                ]
+            },
+            {
+                q: "Name something you might find in a teenager's bedroom that would shock their parents.",
+                answers: [
+                    { text: "Alcohol / drugs / cigarettes", points: 38 },
+                    { text: "Another person / boyfriend or girlfriend", points: 26 },
+                    { text: "R-rated magazines / adult items", points: 16 },
+                    { text: "Dirty dishes / moldy food", points: 12 },
+                    { text: "A clean floor / made bed", points: 8 }
+                ]
+            },
+            {
+                q: "Name an occupation where you shouldn't fall asleep on the job.",
+                answers: [
+                    { text: "Pilot / airline captain", points: 42 },
+                    { text: "Surgeon / doctor", points: 25 },
+                    { text: "Bus / truck driver", points: 17 },
+                    { text: "Lifeguard / security guard", points: 10 },
+                    { text: "Air traffic controller", points: 6 }
+                ]
+            },
+            {
+                q: "Name something people fake.",
+                answers: [
+                    { text: "An orgasm / excitement", points: 35 },
+                    { text: "Being sick / calling in sick", points: 27 },
+                    { text: "A smile / laugh", points: 18 },
+                    { text: "Organs / tan / hair / nails", points: 12 },
+                    { text: "An accent / orgasmic enjoyment", points: 8 }
+                ]
+            },
+            {
+                q: "Name a bad place to run out of toilet paper.",
+                answers: [
+                    { text: "Public restroom / mall", points: 46 },
+                    { text: "A date's / significant other's house", points: 23 },
+                    { text: "At work / office", points: 15 },
+                    { text: "Airplane / road trip gas station", points: 10 },
+                    { text: "Someone else's party", points: 6 }
+                ]
+            },
+            {
+                q: "Name something a woman hates to share with another woman.",
+                answers: [
+                    { text: "Her husband / boyfriend / man", points: 48 },
+                    { text: "The same outfit / dress at a party", points: 22 },
+                    { text: "Makeup / lipstick / brush", points: 14 },
+                    { text: "Her toothbrush / underwear", points: 10 },
+                    { text: "The spotlight / attention", points: 6 }
+                ]
+            },
+            {
+                q: "Name something you don't want your doctor to say while examining you.",
+                answers: [
+                    { text: "Oops / Uh-oh", points: 47 },
+                    { text: "I've never seen that before", points: 24 },
+                    { text: "You only have a few months to live", points: 14 },
+                    { text: "Hold on, let me call another doctor", points: 9 },
+                    { text: "Where did my watch / glove go?", points: 6 }
+                ]
+            },
+            {
+                q: "Name something you'd hate to see the police find in the trunk of your car.",
+                answers: [
+                    { text: "A dead body / person", points: 44 },
+                    { text: "Drugs / illegal substances", points: 25 },
+                    { text: "Weapons / guns", points: 15 },
+                    { text: "Stolen goods / bag of cash", points: 10 },
+                    { text: "Dirty laundry / embarrassing items", points: 6 }
+                ]
+            }
+        ];
+
+        // 5 Iconic Steve Harvey Fast Money Questions with Survey Answer Lists
+        const fastMoneyQuestions = [
+            {
+                q: "Name a reason you might be late for work.",
+                answers: [
+                    { text: "Traffic / car accident", keywords: ["traffic", "jam", "accident", "road"], points: 42 },
+                    { text: "Overslept / alarm didn't go off", keywords: ["oversleep", "overslept", "alarm", "sleep", "slept", "woke"], points: 28 },
+                    { text: "Car trouble / flat tire", keywords: ["car", "tire", "flat", "battery", "engine", "broke"], points: 16 },
+                    { text: "Kids / family emergency", keywords: ["kid", "kids", "child", "baby", "family", "school"], points: 9 },
+                    { text: "Bad weather / snow", keywords: ["weather", "snow", "rain", "storm", "ice"], points: 5 }
+                ]
+            },
+            {
+                q: "Name something people do in an elevator when nobody else is inside.",
+                answers: [
+                    { text: "Fix hair / check mirror", keywords: ["mirror", "hair", "look", "check", "outfit", "face", "selfie"], points: 40 },
+                    { text: "Pass gas / fart", keywords: ["fart", "gas", "toot", "pass"], points: 26 },
+                    { text: "Dance / sing", keywords: ["dance", "dancing", "sing", "singing"], points: 17 },
+                    { text: "Pick nose / adjust clothes", keywords: ["nose", "pick", "wedgie", "scratch", "adjust"], points: 11 },
+                    { text: "Push all the buttons", keywords: ["button", "buttons", "press", "push"], points: 6 }
+                ]
+            },
+            {
+                q: "Name an animal that starts with the letter 'E'.",
+                answers: [
+                    { text: "Elephant", keywords: ["elephant"], points: 54 },
+                    { text: "Eagle", keywords: ["eagle"], points: 22 },
+                    { text: "Eel", keywords: ["eel"], points: 12 },
+                    { text: "Emu", keywords: ["emu"], points: 8 },
+                    { text: "Elk", keywords: ["elk"], points: 4 }
+                ]
+            },
+            {
+                q: "Name something you have to blow on before using or eating.",
+                answers: [
+                    { text: "Hot soup / hot food", keywords: ["soup", "food", "coffee", "tea", "pizza", "hot"], points: 46 },
+                    { text: "Birthday candles", keywords: ["candle", "candles", "birthday"], points: 25 },
+                    { text: "Bubble wand / bubbles", keywords: ["bubble", "bubbles", "wand"], points: 14 },
+                    { text: "Balloon", keywords: ["balloon", "balloons"], points: 9 },
+                    { text: "Video game cartridge / dust", keywords: ["cartridge", "nintendo", "game", "dust"], points: 6 }
+                ]
+            },
+            {
+                q: "Name a place where people often fall asleep.",
+                answers: [
+                    { text: "Couch / sofa / living room", keywords: ["couch", "sofa", "living", "chair", "recliner"], points: 43 },
+                    { text: "Bed / bedroom", keywords: ["bed", "bedroom"], points: 24 },
+                    { text: "Car / airplane / train", keywords: ["car", "plane", "airplane", "flight", "train", "bus"], points: 16 },
+                    { text: "Church / classroom / work", keywords: ["church", "class", "school", "work", "desk", "meeting"], points: 11 },
+                    { text: "Movie theater", keywords: ["movie", "theater", "cinema"], points: 6 }
+                ]
+            }
+        ];
+
+        // Game State
+        let currentRound = 0;
+        let activeTeam = 1;
+        let strikes = 0;
+        let scores = { team1: 0, team2: 0 };
+        let revealedPoints = 0;
+        let timerInterval = null;
+        let timeLeft = 20;
+        let isFastMoney = false;
+        let showFmHints = false;
+        let fmUsedAnswers = [[], [], [], [], []];
+        let bgMusicPlaying = false;
+        let bgMusicTimer = null;
+        let bgMusicStep = 0;
+
+        // Initialize App
+        function init() {
+            renderRoundButtons();
+            loadRound(0);
+            renderFastMoneyQuestions();
+            setActiveTeam(1);
+
+            document.getElementById('team1-name').addEventListener('input', updateActiveTeamLabel);
+            document.getElementById('team2-name').addEventListener('input', updateActiveTeamLabel);
+
+            // Auto-start game music on first user interaction if not yet toggled
+            const autoStartMusic = () => {
+                if (!bgMusicPlaying && !window._userMutedMusic) {
+                    startBgMusic();
+                }
+                document.removeEventListener('pointerdown', autoStartMusic);
+                document.removeEventListener('keydown', autoStartMusic);
+            };
+            document.addEventListener('pointerdown', autoStartMusic);
+            document.addEventListener('keydown', autoStartMusic);
+        }
+
+        // Active Team Selector
+        function setActiveTeam(teamNum) {
+            activeTeam = teamNum;
+            const t1Card = document.getElementById('team1-card');
+            const t2Card = document.getElementById('team2-card');
+            const t1Btn = document.getElementById('team1-active-btn');
+            const t2Btn = document.getElementById('team2-active-btn');
+
+            if (teamNum === 1) {
+                t1Card.className = 'text-center bg-white p-3.5 rounded-2xl shadow-md border-4 border-pink-500 ring-2 ring-pink-300 transition-all';
+                t1Btn.className = 'px-3 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-pink-600 text-white shadow-xs transition cursor-pointer';
+                t1Btn.innerText = '⭐ Playing Now';
+
+                t2Card.className = 'text-center bg-white p-3.5 rounded-2xl shadow-sm border-2 border-pink-200 opacity-85 transition-all';
+                t2Btn.className = 'px-3 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-pink-100 hover:bg-pink-200 text-pink-700 transition cursor-pointer';
+                t2Btn.innerText = 'Set Playing';
+            } else {
+                t2Card.className = 'text-center bg-white p-3.5 rounded-2xl shadow-md border-4 border-pink-500 ring-2 ring-pink-300 transition-all';
+                t2Btn.className = 'px-3 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-pink-600 text-white shadow-xs transition cursor-pointer';
+                t2Btn.innerText = '⭐ Playing Now';
+
+                t1Card.className = 'text-center bg-white p-3.5 rounded-2xl shadow-sm border-2 border-pink-200 opacity-85 transition-all';
+                t1Btn.className = 'px-3 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-pink-100 hover:bg-pink-200 text-pink-700 transition cursor-pointer';
+                t1Btn.innerText = 'Set Playing';
+            }
+            updateActiveTeamLabel();
+        }
+
+        function updateActiveTeamLabel() {
+            const teamName = activeTeam === 1
+                ? (document.getElementById('team1-name').value.trim() || 'Team 1')
+                : (document.getElementById('team2-name').value.trim() || 'Team 2');
+            const label = document.getElementById('guess-prompt-team');
+            if (label) {
+                label.innerText = `${teamName}'s Guess:`;
+            }
+        }
+
+        // Check Player Guess on Standard Board
+        function checkBoardGuess() {
+            const input = document.getElementById('board-guess-input');
+            const feedback = document.getElementById('board-guess-feedback');
+            if (!input || !feedback) return;
+
+            const rawGuess = input.value.trim();
+            if (!rawGuess) return;
+
+            const stopWords = new Set(['a', 'an', 'the', 'to', 'in', 'on', 'at', 'of', 'for', 'my', 'your', 'their', 'and', 'or', 'is', 'it', 'i', 'you', 'they', 'when', 'with', 'from', 'into', 'out', 'up', 'way', 'too', 'about', 'while', 'someone', 'something']);
+            const getStem = (w) => {
+                let s = w.toLowerCase();
+                if (s.endsWith('ing') && s.length > 5) s = s.slice(0, -3);
+                else if (s.endsWith('ed') && s.length > 4) s = s.slice(0, -2);
+                else if (s.endsWith('es') && s.length > 4) s = s.slice(0, -2);
+                else if (s.endsWith('s') && s.length > 3) s = s.slice(0, -1);
+                return s;
+            };
+            const normalizeWords = (str) => str
+                .toLowerCase()
+                .replace(/[^a-z0-9\s]/g, ' ')
+                .split(/\s+/)
+                .filter(w => w.length >= 3 && !stopWords.has(w));
+
+            const guessClean = rawGuess.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').trim();
+            const guessWords = normalizeWords(rawGuess);
+
+            const answers = roundsData[currentRound].answers;
+            const cards = document.querySelectorAll('#answers-board .flip-card');
+            let matchedIndex = -1;
+
+            for (let i = 0; i < answers.length; i++) {
+                const ansClean = answers[i].text.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').trim();
+                const ansWords = normalizeWords(answers[i].text);
+
+                // Direct substring match (for guesses >= 3 chars)
+                const substringMatch = guessClean.length >= 3 && (ansClean.includes(guessClean) || guessClean.includes(ansClean));
+
+                // Flexible keyword & stem matching (e.g. "stealing" <-> "steal", "snooping" <-> "snoop", "selfie" <-> "selfies")
+                const wordMatch = guessWords.some(gw => {
+                    const gStem = getStem(gw);
+                    return ansWords.some(aw => {
+                        const aStem = getStem(aw);
+                        return (
+                            gw === aw ||
+                            gStem === aStem ||
+                            (gStem.length >= 4 && aStem.startsWith(gStem)) ||
+                            (aStem.length >= 4 && gStem.startsWith(aStem))
+                        );
+                    });
+                });
+
+                if (substringMatch || wordMatch) {
+                    matchedIndex = i;
+                    break;
+                }
+            }
+
+            if (matchedIndex !== -1) {
+                const targetCard = cards[matchedIndex];
+                const ansObj = answers[matchedIndex];
+
+                if (targetCard && !targetCard.classList.contains('revealed')) {
+                    targetCard.classList.add('revealed');
+                    revealedPoints += ansObj.points;
+                    updateBoardPointsDisplay();
+                    playChime();
+                    feedback.className = 'text-xs font-extrabold text-emerald-600 mt-2 text-center sm:text-left';
+                    feedback.innerText = `✅ Correct! Revealed #${matchedIndex + 1}: "${ansObj.text}" (+${ansObj.points} pts)`;
+                } else {
+                    feedback.className = 'text-xs font-bold text-amber-600 mt-2 text-center sm:text-left';
+                    feedback.innerText = `⚠️ "${ansObj.text}" is already revealed on the board!`;
+                }
+            } else {
+                feedback.className = 'text-xs font-extrabold text-red-600 mt-2 text-center sm:text-left';
+                feedback.innerText = `❌ "${rawGuess}" is not on the board — Strike!`;
+                addStrike();
+            }
+
+            input.value = '';
+            input.focus();
+        }
+
+        // Render Round Selector Buttons (R1 - R10)
+        function renderRoundButtons() {
+            const container = document.getElementById('round-buttons');
+            container.innerHTML = '';
+            roundsData.forEach((_, idx) => {
+                const btn = document.createElement('button');
+                const active = idx === currentRound;
+                btn.className = `px-3 py-1.5 rounded-xl font-extrabold text-xs transition cursor-pointer ${
+                    active
+                        ? 'bg-pink-600 text-white shadow-md shadow-pink-300 scale-105'
+                        : 'bg-pink-100 text-pink-800 hover:bg-pink-200'
+                }`;
+                btn.innerText = `R${idx + 1}`;
+                btn.onclick = () => loadRound(idx);
+                container.appendChild(btn);
+            });
+        }
+
+        // Load Specific Round
+        function loadRound(idx) {
+            currentRound = idx;
+            revealedPoints = 0;
+            updateBoardPointsDisplay();
+            resetStrikes();
+            renderRoundButtons();
+
+            const guessInput = document.getElementById('board-guess-input');
+            const guessFeedback = document.getElementById('board-guess-feedback');
+            if (guessInput) guessInput.value = '';
+            if (guessFeedback) {
+                guessFeedback.className = 'text-xs font-bold text-pink-500 mt-2 text-center sm:text-left';
+                guessFeedback.innerText = 'Type an answer above — matching answers flip automatically, misses trigger a Strike!';
+            }
+
+            document.getElementById('current-round-num').innerText = idx + 1;
+            document.getElementById('question-text').innerText = roundsData[idx].q;
+
+            const board = document.getElementById('answers-board');
+            board.innerHTML = '';
+
+            roundsData[idx].answers.forEach((ans, i) => {
+                const card = document.createElement('div');
+                card.className = 'flip-card h-14 sm:h-16 cursor-pointer select-none';
+                card.dataset.points = ans.points;
+                card.innerHTML = `
+                    <div class="flip-card-inner relative w-full h-full rounded-2xl shadow-sm">
+                        <div class="flip-card-front absolute inset-0 bg-gradient-to-r from-pink-500 to-rose-400 text-white rounded-2xl flex items-center justify-between px-4 font-extrabold text-base sm:text-lg border-2 border-pink-400 hover:brightness-105 transition">
+                            <span class="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-sm">${i + 1}</span>
+                            <span class="tracking-wide text-sm sm:text-base">▶ Click to Reveal ◀</span>
+                            <span class="text-pink-100 text-sm">??</span>
+                        </div>
+                        <div class="flip-card-back absolute inset-0 bg-pink-50 text-pink-950 rounded-2xl flex items-center justify-between px-4 font-extrabold border-2 border-pink-400 shadow-inner">
+                            <span class="text-sm sm:text-base truncate pr-2">${i + 1}. ${ans.text}</span>
+                            <span class="bg-pink-600 text-white px-3 py-1 rounded-xl text-xs sm:text-sm shrink-0 shadow-xs">${ans.points} pts</span>
+                        </div>
+                    </div>
+                `;
+                card.onclick = () => {
+                    if (!card.classList.contains('revealed')) {
+                        card.classList.add('revealed');
+                        revealedPoints += ans.points;
+                        updateBoardPointsDisplay();
+                        playChime();
+                    }
+                };
+                board.appendChild(card);
+            });
+        }
+
+        function revealAllAnswers() {
+            const cards = document.querySelectorAll('#answers-board .flip-card');
+            let newlyRevealed = false;
+            cards.forEach((card) => {
+                if (!card.classList.contains('revealed')) {
+                    card.classList.add('revealed');
+                    revealedPoints += parseInt(card.dataset.points || '0', 10);
+                    newlyRevealed = true;
+                }
+            });
+            if (newlyRevealed) {
+                updateBoardPointsDisplay();
+                playChime();
+            }
+        }
+
+        function updateBoardPointsDisplay() {
+            document.getElementById('board-points-sum').innerText = revealedPoints;
+        }
+
+        // Strikes & Screen Flash Logic
+        function addStrike() {
+            if (strikes < 3) strikes++;
+            updateStrikesDisplay();
+            triggerStrikeFeedback();
+            playBuzzer();
+        }
+
+        function resetStrikes() {
+            strikes = 0;
+            updateStrikesDisplay();
+        }
+
+        function updateStrikesDisplay() {
+            let str = '';
+            for (let i = 0; i < 3; i++) {
+                str += i < strikes ? '❌ ' : '⭕ ';
+            }
+            document.getElementById('strikes-display').innerText = str.trim();
+        }
+
+        function triggerStrikeFeedback() {
+            const flash = document.getElementById('strike-flash');
+            const icon = document.getElementById('strike-flash-icon');
+            const card = document.getElementById('game-card');
+
+            icon.innerText = strikes === 3 ? '❌ ❌ ❌' : '❌';
+            flash.style.opacity = '1';
+
+            card.classList.remove('shake-board');
+            void card.offsetWidth; // trigger reflow
+            card.classList.add('shake-board');
+
+            setTimeout(() => {
+                flash.style.opacity = '0';
+            }, 450);
+        }
+
+        // Team Score Adjustments
+        function adjustScore(team, amount) {
+            if (team === 1) {
+                scores.team1 = Math.max(0, scores.team1 + amount);
+                document.getElementById('team1-score').innerText = scores.team1;
+            } else {
+                scores.team2 = Math.max(0, scores.team2 + amount);
+                document.getElementById('team2-score').innerText = scores.team2;
+            }
+        }
+
+        function awardRoundPoints(team) {
+            if (revealedPoints > 0) {
+                adjustScore(team, revealedPoints);
+                revealedPoints = 0;
+                updateBoardPointsDisplay();
+                playChime();
+            }
+        }
+
+        // Toggle Standard Board vs Fast Money Bonus Round
+        function toggleGameMode() {
+            isFastMoney = !isFastMoney;
+            const standardView = document.getElementById('standard-board-view');
+            const fastMoneyView = document.getElementById('fast-money-view');
+            const btn = document.getElementById('mode-toggle-btn');
+
+            if (isFastMoney) {
+                standardView.classList.add('hidden');
+                fastMoneyView.classList.remove('hidden');
+                btn.innerText = 'Back to Family Feud Board 🏠';
+            } else {
+                fastMoneyView.classList.add('hidden');
+                standardView.classList.remove('hidden');
+                btn.innerText = 'Switch to Fast Money Bonus Round ⚡';
+            }
+        }
+
+        // Render 5 Rapid-Fire Fast Money Rows with Answer Lists & Auto-Scoring
+        function renderFastMoneyQuestions() {
+            const container = document.getElementById('fm-questions-container');
+            container.innerHTML = '';
+
+            fastMoneyQuestions.forEach((item, idx) => {
+                const answerListHtml = item.answers
+                    .map(a => `<span class="inline-block bg-white border border-pink-200 px-2 py-0.5 rounded-lg mr-1 mb-1 text-[11px] text-pink-800"><strong>${a.text}</strong> (${a.points})</span>`)
+                    .join('');
+
+                const row = document.createElement('div');
+                row.className = 'bg-pink-50/90 border border-pink-200 rounded-2xl p-3.5 sm:p-4 flex flex-col gap-2.5 shadow-xs';
+                row.innerHTML = `
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                        <div class="flex-1">
+                            <div class="text-xs sm:text-sm font-extrabold text-pink-700">Q${idx + 1}: ${item.q}</div>
+                            <div id="fm-match-badge-${idx}" class="text-[11px] font-bold text-pink-400 mt-0.5">Type answer & press Enter to score</div>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <input type="text" id="fm-ans-${idx}" placeholder="Type player answer..."
+                                onkeydown="if(event.key==='Enter'){ event.preventDefault(); evaluateFastMoneyAnswer(${idx}); }"
+                                class="fm-ans-input px-3 py-1.5 bg-white border-2 border-pink-200 rounded-xl text-xs sm:text-sm font-semibold text-pink-950 focus:outline-none focus:border-pink-500 w-40 sm:w-48">
+                            <button onclick="evaluateFastMoneyAnswer(${idx})" title="Score Answer"
+                                class="px-2.5 py-1.5 bg-pink-500 hover:bg-pink-600 active:scale-95 text-white rounded-xl font-extrabold text-xs shadow-xs transition cursor-pointer">
+                                Check
+                            </button>
+                            <button onclick="triggerFastMoneyBigX(${idx}, 'Duplicate / Invalid!')" title="Big X & Clear Answer"
+                                class="px-2.5 py-1.5 bg-red-500 hover:bg-red-600 active:scale-95 text-white rounded-xl font-black text-xs shadow-xs transition cursor-pointer">
+                                ❌
+                            </button>
+                            <input type="number" id="fm-pts-${idx}" min="0" max="100" value="0" oninput="calculateFastMoneyTotal()"
+                                class="fm-pts-input w-14 px-1.5 py-1.5 bg-white border-2 border-pink-300 rounded-xl text-center font-black text-pink-700 text-sm focus:outline-none focus:border-pink-600">
+                        </div>
+                    </div>
+                    <div id="fm-hints-box-${idx}" class="${showFmHints ? '' : 'hidden'} pt-2 border-t border-pink-200/70">
+                        <div class="text-[10px] font-extrabold uppercase tracking-wider text-pink-400 mb-1">Survey Answer List:</div>
+                        <div>${answerListHtml}</div>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function toggleFastMoneyHints() {
+            showFmHints = !showFmHints;
+            const btn = document.getElementById('fm-hints-btn');
+            btn.innerText = showFmHints ? '🙈 Hide Survey Answers' : '👀 Show Survey Answers';
+            for (let i = 0; i < fastMoneyQuestions.length; i++) {
+                const box = document.getElementById(`fm-hints-box-${i}`);
+                if (box) {
+                    box.classList.toggle('hidden', !showFmHints);
+                }
+            }
+        }
+
+        function triggerFastMoneyBigX(idx, reasonText) {
+            const flash = document.getElementById('strike-flash');
+            const icon = document.getElementById('strike-flash-icon');
+            const card = document.getElementById('game-card');
+            const input = document.getElementById(`fm-ans-${idx}`);
+            const badge = document.getElementById(`fm-match-badge-${idx}`);
+
+            // Pop up huge X and play buzzer
+            icon.innerText = '❌';
+            flash.style.opacity = '1';
+            card.classList.remove('shake-board');
+            void card.offsetWidth;
+            card.classList.add('shake-board');
+            playBuzzer();
+
+            if (badge) {
+                badge.className = 'text-[11px] font-extrabold text-red-600 mt-0.5';
+                badge.innerText = `❌ ${reasonText} Try another answer!`;
+            }
+
+            // Delete the player's answer and focus input for a fast retry
+            setTimeout(() => {
+                flash.style.opacity = '0';
+                if (input) {
+                    input.value = '';
+                    input.focus();
+                }
+            }, 650);
+        }
+
+        // Evaluate Player Answer in Fast Money Bonus Round
+        function evaluateFastMoneyAnswer(idx) {
+            const input = document.getElementById(`fm-ans-${idx}`);
+            const ptsInput = document.getElementById(`fm-pts-${idx}`);
+            const badge = document.getElementById(`fm-match-badge-${idx}`);
+            if (!input || !ptsInput || !badge) return;
+
+            const rawVal = input.value.trim();
+            if (!rawVal) return;
+
+            const normalized = rawVal.toLowerCase().trim();
+
+            // Check if exact phrase was already used by Player 1
+            if (fmUsedAnswers[idx].includes(normalized)) {
+                triggerFastMoneyBigX(idx, `Duplicate answer "${rawVal}"!`);
+                return;
+            }
+
+            // Search the survey answer list for a keyword or word-stem match
+            const qData = fastMoneyQuestions[idx];
+            const getFmStem = (w) => {
+                let s = w.toLowerCase();
+                if (s.endsWith('ing') && s.length > 5) s = s.slice(0, -3);
+                else if (s.endsWith('ed') && s.length > 4) s = s.slice(0, -2);
+                else if (s.endsWith('es') && s.length > 4) s = s.slice(0, -2);
+                else if (s.endsWith('s') && s.length > 3) s = s.slice(0, -1);
+                return s;
+            };
+            const guessTokens = normalized.replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length >= 3);
+
+            let matchedAnswer = null;
+            for (const ans of qData.answers) {
+                const ansTokens = ans.text.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length >= 3);
+                const isMatch = ans.keywords.some(kw => normalized.includes(kw) || (kw.includes(normalized) && normalized.length >= 3)) ||
+                    guessTokens.some(gt => {
+                        const gStem = getFmStem(gt);
+                        return [...ans.keywords, ...ansTokens].some(target => {
+                            const tStem = getFmStem(target);
+                            return gt === target || gStem === tStem || (gStem.length >= 4 && tStem.startsWith(gStem)) || (tStem.length >= 4 && gStem.startsWith(tStem));
+                        });
+                    });
+                if (isMatch) {
+                    matchedAnswer = ans;
+                    break;
+                }
+            }
+
+            if (matchedAnswer) {
+                // Check if the matched survey category was already used by Player 1
+                if (fmUsedAnswers[idx].includes(matchedAnswer.text.toLowerCase())) {
+                    triggerFastMoneyBigX(idx, `Already guessed (${matchedAnswer.text})!`);
+                    return;
+                }
+
+                fmUsedAnswers[idx].push(normalized);
+                fmUsedAnswers[idx].push(matchedAnswer.text.toLowerCase());
+                ptsInput.value = matchedAnswer.points;
+                badge.className = 'text-[11px] font-extrabold text-emerald-600 mt-0.5';
+                badge.innerText = `✅ Matched "${matchedAnswer.text}" (+${matchedAnswer.points} pts)!`;
+                playChime();
+            } else {
+                // Answer is not on the survey board -> award 0 points
+                fmUsedAnswers[idx].push(normalized);
+                ptsInput.value = 0;
+                badge.className = 'text-[11px] font-bold text-amber-600 mt-0.5';
+                badge.innerText = `0 pts — Not on top survey list (or click ❌ to clear)`;
+                playTick();
+            }
+
+            calculateFastMoneyTotal();
+        }
+
+        function calculateFastMoneyTotal() {
+            const inputs = document.querySelectorAll('.fm-pts-input');
+            let total = 0;
+            inputs.forEach((inp) => {
+                const val = parseInt(inp.value, 10);
+                if (!isNaN(val) && val > 0) total += val;
+            });
+
+            document.getElementById('fm-total-score').innerText = total;
+            const badge = document.getElementById('fm-status-badge');
+
+            if (total >= 100) {
+                badge.className = 'mt-2 px-4 py-1 rounded-full bg-emerald-500 text-white font-black text-xs shadow-sm';
+                badge.innerText = '🎉 100+ PTS — BONUS WINNER! 🎉';
+                playWinFanfare();
+            } else {
+                badge.className = 'mt-2 px-4 py-1 rounded-full bg-pink-100 text-pink-700 font-extrabold text-xs';
+                badge.innerText = `Need ${100 - total} more pts to Win!`;
+            }
+        }
+
+        function resetFastMoneyBoard() {
+            fmUsedAnswers = [[], [], [], [], []];
+            for (let i = 0; i < fastMoneyQuestions.length; i++) {
+                const ansInp = document.getElementById(`fm-ans-${i}`);
+                const ptsInp = document.getElementById(`fm-pts-${i}`);
+                const badge = document.getElementById(`fm-match-badge-${i}`);
+                if (ansInp) ansInp.value = '';
+                if (ptsInp) ptsInp.value = '0';
+                if (badge) {
+                    badge.className = 'text-[11px] font-bold text-pink-400 mt-0.5';
+                    badge.innerText = 'Type answer & press Enter to score';
+                }
+            }
+            calculateFastMoneyTotal();
+        }
+
+        // Fast Money Countdown Timer
+        function startTimer(seconds = 20) {
+            if (timerInterval) clearInterval(timerInterval);
+            timeLeft = seconds;
+            const display = document.getElementById('timer-display');
+            display.innerText = timeLeft;
+            display.classList.remove('text-red-500');
+            display.classList.add('text-pink-400');
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                display.innerText = timeLeft;
+
+                if (timeLeft <= 5 && timeLeft > 0) {
+                    display.classList.remove('text-pink-400');
+                    display.classList.add('text-red-400');
+                    playTick();
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    display.classList.add('text-red-500');
+                    playBuzzer();
+                    triggerStrikeFeedback();
+                }
+            }, 1000);
+        }
+
+        function resetTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timeLeft = 20;
+            const display = document.getElementById('timer-display');
+            display.innerText = timeLeft;
+            display.classList.remove('text-red-500', 'text-red-400');
+            display.classList.add('text-pink-400');
+        }
+
+        // Web Audio API Synthesized Sound Effects
+        let audioCtx = null;
+        function getAudioCtx() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function playChime() {
+            try {
+                const ctx = getAudioCtx();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+                osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1); // A5
+                gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.45);
+            } catch (e) {}
+        }
+
+        function playBuzzer() {
+            try {
+                const ctx = getAudioCtx();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(110, ctx.currentTime); // Low A2
+                gain.gain.setValueAtTime(0.25, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.5);
+            } catch (e) {}
+        }
+
+        function playTick() {
+            try {
+                const ctx = getAudioCtx();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(750, ctx.currentTime);
+                gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.08);
+            } catch (e) {}
+        }
+
+        function playWinFanfare() {
+            try {
+                const ctx = getAudioCtx();
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, i) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.12);
+                    gain.gain.setValueAtTime(0.18, ctx.currentTime + i * 0.12);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.35);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(ctx.currentTime + i * 0.12);
+                    osc.stop(ctx.currentTime + i * 0.12 + 0.35);
+                });
+            } catch (e) {}
+        }
+
+        // Upbeat Game-Show Background Music (Uses local Game-Show-Music.mp3 with synth fallback)
+        function toggleBgMusic() {
+            if (bgMusicPlaying) {
+                window._userMutedMusic = true;
+                stopBgMusic();
+            } else {
+                window._userMutedMusic = false;
+                startBgMusic();
+            }
+        }
+
+        function startBgMusic() {
+            if (bgMusicPlaying) return;
+            const audioEl = document.getElementById('bg-music-audio');
+
+            if (audioEl) {
+                audioEl.volume = 0.45;
+                const playPromise = audioEl.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        bgMusicPlaying = true;
+                        updateBgMusicButton();
+                    }).catch(() => {
+                        // Fallback to built-in synth if Game-Show-Music.mp3 is not present in preview
+                        startSynthFallbackMusic();
+                    });
+                    return;
+                }
+            }
+            startSynthFallbackMusic();
+        }
+
+        function startSynthFallbackMusic() {
+            try {
+                getAudioCtx();
+                bgMusicPlaying = true;
+                bgMusicStep = 0;
+                updateBgMusicButton();
+                playBgMusicStep();
+                bgMusicTimer = setInterval(playBgMusicStep, 235);
+            } catch (e) {}
+        }
+
+        function stopBgMusic() {
+            bgMusicPlaying = false;
+            const audioEl = document.getElementById('bg-music-audio');
+            if (audioEl) {
+                audioEl.pause();
+            }
+            if (bgMusicTimer) {
+                clearInterval(bgMusicTimer);
+                bgMusicTimer = null;
+            }
+            updateBgMusicButton();
+        }
+
+        function updateBgMusicButton() {
+            const btn = document.getElementById('bg-music-btn');
+            const icon = document.getElementById('bg-music-icon');
+            const label = document.getElementById('bg-music-label');
+            if (!btn || !icon || !label) return;
+
+            if (bgMusicPlaying) {
+                btn.className = 'inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-pink-600 hover:bg-pink-700 active:scale-95 text-white border-2 border-pink-600 font-extrabold text-xs shadow-sm transition cursor-pointer';
+                icon.innerText = '🎵';
+                label.innerText = 'Game Music: ON';
+            } else {
+                btn.className = 'inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white hover:bg-pink-100 active:scale-95 text-pink-700 border-2 border-pink-300 font-extrabold text-xs shadow-xs transition cursor-pointer';
+                icon.innerText = '🔇';
+                label.innerText = 'Play Game Music';
+            }
+        }
+
+        function playBgMusicStep() {
+            if (!bgMusicPlaying) return;
+            try {
+                const ctx = getAudioCtx();
+                const now = ctx.currentTime;
+                const step = bgMusicStep % 16;
+
+                // Funky walking game-show bassline (C major / mixolydian groove)
+                const bassPattern = [
+                    130.81, 0, 130.81, 155.56, 164.81, 0, 196.00, 0,
+                    220.00, 0, 196.00, 174.61, 164.81, 0, 146.83, 196.00
+                ];
+                // Bouncy brass/synth stabs on upbeat accents
+                const leadPattern = [
+                    523.25, 0, 0, 659.25, 0, 587.33, 0, 523.25,
+                    659.25, 0, 783.99, 0, 659.25, 587.33, 523.25, 0
+                ];
+
+                const bassFreq = bassPattern[step];
+                if (bassFreq > 0) {
+                    const bassOsc = ctx.createOscillator();
+                    const bassGain = ctx.createGain();
+                    bassOsc.type = 'triangle';
+                    bassOsc.frequency.setValueAtTime(bassFreq, now);
+                    bassGain.gain.setValueAtTime(0.065, now);
+                    bassGain.gain.exponentialRampToValueAtTime(0.001, now + 0.21);
+                    bassOsc.connect(bassGain);
+                    bassGain.connect(ctx.destination);
+                    bassOsc.start(now);
+                    bassOsc.stop(now + 0.21);
+                }
+
+                const leadFreq = leadPattern[step];
+                if (leadFreq > 0) {
+                    const leadOsc = ctx.createOscillator();
+                    const leadGain = ctx.createGain();
+                    leadOsc.type = 'sine';
+                    leadOsc.frequency.setValueAtTime(leadFreq, now);
+                    leadGain.gain.setValueAtTime(0.032, now);
+                    leadGain.gain.exponentialRampToValueAtTime(0.001, now + 0.19);
+                    leadOsc.connect(leadGain);
+                    leadGain.connect(ctx.destination);
+                    leadOsc.start(now);
+                    leadOsc.stop(now + 0.19);
+                }
+
+                // Soft hi-hat pulse on off-beats for game-show energy
+                if (step % 2 === 1) {
+                    const hatOsc = ctx.createOscillator();
+                    const hatGain = ctx.createGain();
+                    hatOsc.type = 'square';
+                    hatOsc.frequency.setValueAtTime(4200, now);
+                    hatGain.gain.setValueAtTime(0.008, now);
+                    hatGain.gain.exponentialRampToValueAtTime(0.0005, now + 0.04);
+                    hatOsc.connect(hatGain);
+                    hatGain.connect(ctx.destination);
+                    hatOsc.start(now);
+                    hatOsc.stop(now + 0.04);
+                }
+
+                bgMusicStep++;
+            } catch (e) {}
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
