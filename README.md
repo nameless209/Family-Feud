@@ -1,2 +1,3 @@
 # Family-Feud
-party game
+Party game
+This is so hard 
